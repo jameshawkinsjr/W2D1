@@ -8,49 +8,48 @@ class Board
 
     def new_grid
         @null_piece = NullPiece.instance
-        board = []
-        8.times { board << [] }
-
-        board.each_with_index do |el, row|
-            next if [0,1,6,7].include?(row)
-            8.times do |col|
-                board[row] << @null_piece
-            end
-        end
+        board = Array.new(8) { Array.new(8) { @null_piece }}
+    
         board.each_with_index do |el, row|
             next unless [0,1,6,7].include?(row)
             8.times do |col|
                 color = row < 4 ? "white" : "black"
-                board[row] << Piece.new([row,col], color)
+                board[row][col] = Piece.new([row,col], color)
             end
         end
     end
 
     def [](pos)
-        row,col = pos
+        row, col = pos
         @grid[row][col]
     end
 
-    def []=(pos, move)
-        row,col = pos
-        @grid[row][col] = move
+    def []=(pos, placed_piece)
+        row, col = pos
+        @grid[row][col] = placed_piece
     end
 
     def move_piece(start_pos, end_pos)
-        debugger
-        raise StandardError if @grid[start_pos].is_a?(NullPiece)
-        # raise StandardError unless valid_move?
-        @grid[start_pos], @grid[end_pos] = start, final
-        if start.color != final.color
-            final = start
-            start = @null_piece
-        else
-            start, final = final, start
+        start, final = self[start_pos], self[end_pos]
+        if valid_move?(start_pos, end_pos)
+            self[end_pos] = start
+            self[start_pos] = @null_piece
+            self[end_pos].pos = end_pos
+            "#{self[end_pos].class} was moved from #{start_pos} to #{end_pos}"
         end
     end
 
     def valid_move?(start_pos, end_pos)
-        # if the piece at start position can overtake
-        #      the piece at end position return true
+        raise OutOfBoundsError if start_pos[0] < 0 || start_pos[1] > 7 
+        raise OutOfBoundsError if end_pos[0] < 0 || end_pos[1] > 7
+        start, final = self[start_pos], self[end_pos]
+        raise NullPieceError if start.is_a?(NullPiece)
+        raise SameColorError if start.color == final.color
+        return true if final.is_a?(NullPiece)
+        true
     end
 end
+
+class OutOfBoundsError < StandardError; end
+class SameColorError < StandardError; end
+class NullPieceError < StandardError; end
