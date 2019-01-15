@@ -1,9 +1,16 @@
 require_relative 'piece'
+require_relative 'cursor'
+require_relative 'display'
 require 'byebug'
-class Board
 
+class Board
+    attr_reader :grid
     def initialize
         @grid = self.new_grid
+        @display = Display.new(self)
+    end
+
+    def inspect
     end
 
     def new_grid
@@ -16,6 +23,18 @@ class Board
                 color = row < 4 ? "white" : "black"
                 board[row][col] = Piece.new([row,col], color)
             end
+        end
+    end
+
+    def move_cursor
+        count = 0
+        begin
+            until count > 20
+                @display.move_cursor
+                count += 1
+            end
+        rescue OutOfBoundsError
+            retry
         end
     end
 
@@ -37,6 +56,7 @@ class Board
             self[end_pos].pos = end_pos
             "#{self[end_pos].class} was moved from #{start_pos} to #{end_pos}"
         end
+        Display.new(self).render
     end
 
     def valid_move?(start_pos, end_pos)
